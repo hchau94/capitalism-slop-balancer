@@ -4,3 +4,5 @@ obj/
 
 # Ignore .idea folder (used by JetBrains IDEs like IntelliJ, WebStorm, PyCharm, etc.)
 .idea/
+
+localConfig.json
