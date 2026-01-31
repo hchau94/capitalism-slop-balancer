@@ -10,10 +10,10 @@ public class MainPresenter
     {
         _view = view;
 
-        _view.UpdateClicked += OnUpdateClick;
+        _view.BalanceClicked += OnBalanceClick;
     }
     
-    private void OnUpdateClick(object? sender, EventArgs e)
+    private void OnBalanceClick(object? sender, EventArgs e)
     {
         var text = _view.GetTickers();
     }

@@ -1,15 +1,14 @@
-namespace SlopBalancer;
+namespace SlopBalancer.Views;
 
 using Abstractions;
 using Presenters;
 
 public partial class MainView : Form, IView
 {
-    public event EventHandler? UpdateClicked;
+    public event EventHandler? BalanceClicked;
     
     private MainPresenter _presenter;
-
-    private bool textBoxWasJustPastedInto = false;
+    private bool _textBoxWasJustPastedInto = false;
     
     public MainView()
     {
@@ -18,20 +17,24 @@ public partial class MainView : Form, IView
         _presenter = new MainPresenter(this);
 
         txtTickers.KeyDown += RecordIfPastedFromClipboard;
+        txtCurrentShares.KeyDown += RecordIfPastedFromClipboard;
+        txtTargets.KeyDown += RecordIfPastedFromClipboard;
         txtTickers.TextChanged += CleanUpTextInput;
-        btnUpdate.Click += UpdateClickRepeater;
+        txtCurrentShares.TextChanged += CleanUpTextInput;
+        txtTargets.TextChanged += CleanUpTextInput;
+        btnBalance.Click += UpdateClickRepeater;
     }
     
     private void RecordIfPastedFromClipboard(object? sender, KeyEventArgs e)
     {
         if (e.Control && e.KeyCode == Keys.V)
-            textBoxWasJustPastedInto = true;
+            _textBoxWasJustPastedInto = true;
     }
     
     private void CleanUpTextInput(object? sender, EventArgs e)
     {
-        if (!textBoxWasJustPastedInto) return;
-        textBoxWasJustPastedInto = false;
+        if (!_textBoxWasJustPastedInto) return;
+        _textBoxWasJustPastedInto = false;
         TextBox? textBox = (TextBox?)sender;
         if (textBox == null) return;
         this.BeginInvoke(() =>
@@ -42,7 +45,7 @@ public partial class MainView : Form, IView
 
     private void UpdateClickRepeater(object? sender, EventArgs e)
     {
-        UpdateClicked?.Invoke(sender, e);
+        BalanceClicked?.Invoke(sender, e);
     }
 
     public string GetTickers()

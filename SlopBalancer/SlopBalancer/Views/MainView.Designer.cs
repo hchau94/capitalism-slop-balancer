@@ -1,4 +1,4 @@
-﻿namespace SlopBalancer;
+﻿namespace SlopBalancer.Views;
 
 partial class MainView
 {
@@ -30,7 +30,7 @@ partial class MainView
     private void InitializeComponent()
     {
         splitContainer1 = new System.Windows.Forms.SplitContainer();
-        btnUpdate = new System.Windows.Forms.Button();
+        btnBalance = new System.Windows.Forms.Button();
         chkOnlyToBands = new System.Windows.Forms.CheckBox();
         chkCurrentOnly = new System.Windows.Forms.CheckBox();
         chkAddCash = new System.Windows.Forms.CheckBox();
@@ -56,7 +56,7 @@ partial class MainView
         // 
         // splitContainer1.Panel1
         // 
-        splitContainer1.Panel1.Controls.Add(btnUpdate);
+        splitContainer1.Panel1.Controls.Add(btnBalance);
         splitContainer1.Panel1.Controls.Add(chkOnlyToBands);
         splitContainer1.Panel1.Controls.Add(chkCurrentOnly);
         splitContainer1.Panel1.Controls.Add(chkAddCash);
@@ -73,14 +73,14 @@ partial class MainView
         splitContainer1.TabIndex = 0;
         splitContainer1.Text = "splitContainer1";
         // 
-        // btnUpdate
+        // btnBalance
         // 
-        btnUpdate.Location = new System.Drawing.Point(705, 193);
-        btnUpdate.Name = "btnUpdate";
-        btnUpdate.Size = new System.Drawing.Size(75, 23);
-        btnUpdate.TabIndex = 7;
-        btnUpdate.Text = "Update";
-        btnUpdate.UseVisualStyleBackColor = true;
+        btnBalance.Location = new System.Drawing.Point(705, 193);
+        btnBalance.Name = "btnBalance";
+        btnBalance.Size = new System.Drawing.Size(75, 23);
+        btnBalance.TabIndex = 7;
+        btnBalance.Text = "Balance";
+        btnBalance.UseVisualStyleBackColor = true;
         // 
         // chkOnlyToBands
         // 
@@ -170,7 +170,7 @@ partial class MainView
         ResumeLayout(false);
     }
 
-    private System.Windows.Forms.Button btnUpdate;
+    private System.Windows.Forms.Button btnBalance;
 
     private System.Windows.Forms.TextBox txtCashToAdd;
     private System.Windows.Forms.CheckBox chkAddCash;

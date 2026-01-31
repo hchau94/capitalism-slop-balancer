@@ -2,7 +2,7 @@ namespace SlopBalancer.Abstractions;
 
 public interface IView
 {
-    event EventHandler UpdateClicked;
+    event EventHandler BalanceClicked;
 
     string GetTickers();
 }
