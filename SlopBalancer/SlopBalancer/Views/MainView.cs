@@ -1,3 +1,4 @@
+using System.ComponentModel;
 namespace SlopBalancer.Views;
 
 using Abstractions;
@@ -9,6 +10,55 @@ public partial class MainView : Form, IView
     
     private MainPresenter _presenter;
     private bool _textBoxWasJustPastedInto = false;
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool AddNewCash
+    {
+        get => chkAddCash.Checked;
+        set => chkAddCash.Checked = value;
+    }
+    
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool UseCurrentSharesOnly
+    {
+        get => chkCurrentOnly.Checked;
+        set => chkCurrentOnly.Checked = value;
+    }
+    
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool RebalanceOnlyToBands
+    {
+        get => chkOnlyToBands.Checked;
+        set => chkOnlyToBands.Checked = value;
+    }
+    
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public string Tickers
+    {
+        get => txtTickers.Text;
+        set => txtTickers.Text = value;
+    }
+    
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public string CurrentShares
+    {
+        get => txtCurrentShares.Text;
+        set => txtCurrentShares.Text = value;
+    }
+    
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public string Targets
+    {
+        get => txtTargets.Text;
+        set => txtTargets.Text = value;
+    }
+    
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public string NewCashToAdd
+    {
+        get => txtCashToAdd.Text;
+        set => txtCashToAdd.Text = value;
+    }
     
     public MainView()
     {
@@ -22,7 +72,7 @@ public partial class MainView : Form, IView
         txtTickers.TextChanged += CleanUpTextInput;
         txtCurrentShares.TextChanged += CleanUpTextInput;
         txtTargets.TextChanged += CleanUpTextInput;
-        btnBalance.Click += UpdateClickRepeater;
+        btnBalance.Click += BalanceClickRepeater;
     }
     
     private void RecordIfPastedFromClipboard(object? sender, KeyEventArgs e)
@@ -43,13 +93,8 @@ public partial class MainView : Form, IView
         });
     }
 
-    private void UpdateClickRepeater(object? sender, EventArgs e)
+    private void BalanceClickRepeater(object? sender, EventArgs e)
     {
         BalanceClicked?.Invoke(sender, e);
-    }
-
-    public string GetTickers()
-    {
-        return txtTickers.Text;
     }
 }
