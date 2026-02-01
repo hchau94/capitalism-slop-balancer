@@ -7,9 +7,6 @@ public class Investment
     public decimal price;
     public int target;
 
-    public decimal dollarShortFall;
-
-    public decimal dollarsToAdd;
     public decimal sharesToAdd;
 
     public Investment(string ticker, decimal shares, decimal price, int target)

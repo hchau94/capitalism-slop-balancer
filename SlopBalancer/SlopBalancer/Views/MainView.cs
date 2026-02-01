@@ -19,6 +19,8 @@ public partial class MainView : Form
         txtCurrentShares.TextChanged += MaybeEnableBalanceButton;
         cmdRefresh.Click += MaybeEnableBalanceButton;
 
+        txtMagic.TextChanged += ProcessMegaPaste;
+
         cmdBalance.Click += Rebalance;
     }
 
@@ -39,6 +41,35 @@ public partial class MainView : Form
         return textBoxesArePopulated && allInputCountsMatch && modeIsSelected;
     }
 
+    private void ProcessMegaPaste(object sender, EventArgs e)
+    {
+        var pastedRows = txtMagic.Text.Split("\r\n").ToList();
+
+        var headers = pastedRows.First();
+        var tickerIndex = headers.Split("\t").Select((value, i) => new { value, i }).FirstOrDefault(x => x.value == "Ticker")?.i ?? -1;
+        var priceIndex = headers.Split("\t").Select((value, i) => new { value, i }).FirstOrDefault(x => x.value == "Price")?.i ?? -1;
+        var sharesIndex = headers.Split("\t").Select((value, i) => new { value, i }).FirstOrDefault(x => x.value == "Shares")?.i ?? -1;
+        var targetIndex = headers.Split("\t").Select((value, i) => new { value, i }).FirstOrDefault(x => x.value == "Target")?.i ?? -1;
+        if (tickerIndex == -1 || priceIndex == -1 || sharesIndex == -1 || targetIndex == -1) return;
+
+        var tickers = new List<string>();
+        var prices = new List<string>();
+        var shares = new List<string>();
+        var targets = new List<string>();
+        foreach (var pastedRow in pastedRows.Skip(1))
+        {
+            var pastedRowValues = pastedRow.Split("\t");
+            tickers.Add(pastedRowValues[tickerIndex]);
+            prices.Add(pastedRowValues[priceIndex]);
+            shares.Add(pastedRowValues[sharesIndex]);
+            targets.Add(pastedRowValues[targetIndex]);
+        }
+        txtTickers.Text = string.Join("\r\n", tickers);
+        txtPrices.Text = string.Join("\r\n", prices);
+        txtCurrentShares.Text = string.Join("\r\n", shares);
+        txtTargets.Text = string.Join("\r\n", targets);
+    }
+
     private void Rebalance(object sender, EventArgs e)
     {
         var tickers = ProcessTickers(txtTickers.Text);
@@ -55,13 +86,15 @@ public partial class MainView : Form
         if (radioAddCash.Checked)
         {
             if (string.IsNullOrWhiteSpace(txtCash.Text)) RebalanceWithOnlyCurrentShares(chkOnlyToBands.Checked, investments);
-            RebalanceWithNewCash(chkOnlyToBands.Checked, investments);
+            RebalanceWithOnlyNewCash(chkOnlyToBands.Checked, investments);
 
         }
         else if (radioOnlyCurrent.Checked)
         {
             RebalanceWithOnlyCurrentShares(chkOnlyToBands.Checked, investments);
         }
+
+        OutputRebalancedData(investments);
     }
 
     private List<string> ProcessTickers(string tickers)
@@ -84,69 +117,29 @@ public partial class MainView : Form
         return targets.Replace("%", "").Split("\r\n").Select(x => x.Trim()).Where(x => int.TryParse(x, out _)).Select(int.Parse).ToList();
     }
 
-    private void RebalanceWithNewCash(bool onlyToBands, List<Investment> investments)
+    private void RebalanceWithOnlyNewCash(bool onlyToBands, List<Investment> investments)
     {
         var cashToAdd = decimal.TryParse(txtCash.Text.Trim(), out var temp) ? temp : 0m;
         var totalValue = investments.Sum(x => x.shares * x.price);
-        
-        foreach (var inv in investments)
-        {
-            var targetDollar = (inv.target / 100m) * totalValue;
-            var currentDollar = inv.shares * inv.price;
-            inv.dollarShortFall = targetDollar - currentDollar; // positive = underweight
-        }
-        var underweightInvestments = investments.Where(i => i.dollarShortFall > 0).ToList();
-        var totalDollarShortfall = underweightInvestments.Sum(i => i.dollarShortFall);
-        
-        foreach (var inv in underweightInvestments)
-        {
-            // Allocate proportionally
-            var allocatedDollar = totalDollarShortfall > 0
-                ? inv.dollarShortFall / totalDollarShortfall * cashToAdd
-                : 0;
 
-            // Cap at exact shortfall
-            allocatedDollar = Math.Min(allocatedDollar, inv.dollarShortFall);
-
-            // Convert to whole shares, rounding down
-            inv.sharesToAdd = (int)Math.Floor(allocatedDollar / inv.price);
-            inv.dollarsToAdd = inv.sharesToAdd * inv.price;
-        }
-        var allocatedCash = underweightInvestments.Sum(i => i.dollarsToAdd);
-        var leftoverCash = cashToAdd - allocatedCash;
-        
-        while (leftoverCash > 0)
-        {
-            // Get candidates: underweight positions that can accept at least one more share
-            var candidates = underweightInvestments
-                .Where(i => (i.dollarShortFall - i.dollarsToAdd) >= i.price)
-                .OrderByDescending(i => i.dollarShortFall - i.dollarsToAdd)
-                .ToList();
-
-            if (candidates.Count == 0)
-                break; // no more investments can accept leftover cash
-
-            bool allocatedThisRound = false;
-
-            foreach (var inv in candidates)
-            {
-                if (leftoverCash >= inv.price)
-                {
-                    inv.sharesToAdd += 1;
-                    inv.dollarsToAdd += inv.price;
-                    leftoverCash -= inv.price;
-                    allocatedThisRound = true;
-                }
-            }
-
-            if (!allocatedThisRound)
-                break; // cannot allocate any more cash, exit safely
-        }
-
+        var obviouslyNeedMoreShares = investments.Where(x => ((x.shares * x.price)/totalValue) - (x.target / 100m) < -0.02m).ToList();
     }
-    
+
     private List<decimal> RebalanceWithOnlyCurrentShares(bool onlyToBands,  List<Investment> investments)
     {
         return null;
+    }
+
+    private void OutputRebalancedData(List<Investment> investments)
+    {
+        foreach (var investment in investments)
+        {
+            txtOutput.Text += $"{investment.ticker} should get {investment.sharesToAdd} more shares.\r\n";
+        }
+        
+        var cashToAdd = decimal.TryParse(txtCash.Text.Trim(), out var temp) ? temp : 0m;
+        var totalValue = investments.Sum(x => x.shares * x.price);
+        var totalRebalancedValue = investments.Sum(x => (x.shares + x.sharesToAdd) * x.price);
+        txtOutput.Text += $"Leftover cash: {cashToAdd - (totalRebalancedValue - totalValue)}";
     }
 }
