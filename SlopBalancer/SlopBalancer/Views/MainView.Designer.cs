@@ -50,6 +50,7 @@ partial class MainView
         chkOnlyToBands = new System.Windows.Forms.CheckBox();
         radioOnlyCurrent = new System.Windows.Forms.RadioButton();
         radioAddCash = new System.Windows.Forms.RadioButton();
+        cmdRefresh = new System.Windows.Forms.Button();
         tableLayoutPanel1.SuspendLayout();
         panelControls.SuspendLayout();
         SuspendLayout();
@@ -187,6 +188,7 @@ partial class MainView
         // 
         // panelControls
         // 
+        panelControls.Controls.Add(cmdRefresh);
         panelControls.Controls.Add(cmdBalance);
         panelControls.Controls.Add(lblCash);
         panelControls.Controls.Add(txtCash);
@@ -255,6 +257,15 @@ partial class MainView
         radioAddCash.Text = "Add Cash";
         radioAddCash.UseVisualStyleBackColor = true;
         // 
+        // cmdRefresh
+        // 
+        cmdRefresh.Location = new System.Drawing.Point(64, 427);
+        cmdRefresh.Name = "cmdRefresh";
+        cmdRefresh.Size = new System.Drawing.Size(75, 23);
+        cmdRefresh.TabIndex = 6;
+        cmdRefresh.Text = "Refresh";
+        cmdRefresh.UseVisualStyleBackColor = true;
+        // 
         // MainView
         // 
         AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -268,6 +279,8 @@ partial class MainView
         panelControls.PerformLayout();
         ResumeLayout(false);
     }
+
+    private System.Windows.Forms.Button cmdRefresh;
 
     private System.Windows.Forms.Button cmdBalance;
 
