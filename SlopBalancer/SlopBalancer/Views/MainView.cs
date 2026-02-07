@@ -17,9 +17,12 @@ public partial class MainView : Form
         txtCurrentShares.TextChanged += MaybeEnableBalanceButton;
         txtPrices.TextChanged += MaybeEnableBalanceButton;
         txtCurrentShares.TextChanged += MaybeEnableBalanceButton;
+        
+        cmdRefresh.Click += ProcessMegaPaste;
         cmdRefresh.Click += MaybeEnableBalanceButton;
 
         txtMagic.TextChanged += ProcessMegaPaste;
+        txtMagic.TextChanged += MaybeEnableBalanceButton;
 
         cmdBalance.Click += Rebalance;
     }
@@ -44,12 +47,17 @@ public partial class MainView : Form
     private void ProcessMegaPaste(object sender, EventArgs e)
     {
         var pastedRows = txtMagic.Text.Split("\r\n").ToList();
-
         var headers = pastedRows.First();
+        if (pastedRows.Count <= 1 || string.IsNullOrWhiteSpace(headers)) return;
+
         var tickerIndex = headers.Split("\t").Select((value, i) => new { value, i }).FirstOrDefault(x => x.value == "Ticker")?.i ?? -1;
         var priceIndex = headers.Split("\t").Select((value, i) => new { value, i }).FirstOrDefault(x => x.value == "Price")?.i ?? -1;
         var sharesIndex = headers.Split("\t").Select((value, i) => new { value, i }).FirstOrDefault(x => x.value == "Shares")?.i ?? -1;
         var targetIndex = headers.Split("\t").Select((value, i) => new { value, i }).FirstOrDefault(x => x.value == "Target")?.i ?? -1;
+        if (tickerIndex == -1) MessageBox.Show( "Make sure you pasted in col headers, and make sure you include Ticker", "Invalid Paste");;
+        if (priceIndex == -1) MessageBox.Show( "Make sure you pasted in col headers, and make sure you include Price", "Invalid Paste");;
+        if (sharesIndex == -1) MessageBox.Show("Make sure you pasted in col headers, and make sure you include Shares", "Invalid Paste");;
+        if (targetIndex == -1) MessageBox.Show("Make sure you pasted in col headers, and make sure you include Target", "Invalid Paste");;
         if (tickerIndex == -1 || priceIndex == -1 || sharesIndex == -1 || targetIndex == -1) return;
 
         var tickers = new List<string>();
@@ -82,11 +90,16 @@ public partial class MainView : Form
         {
             investments.Add(new Investment(tickers[i], currentShares[i], prices[i], targets[i]));
         }
+        var totalValue = investments.Sum(x => x.value);
+        foreach (var investment in investments)
+        {
+            investment.Initialize(totalValue);
+        }
 
         if (radioAddCash.Checked)
         {
-            if (string.IsNullOrWhiteSpace(txtCash.Text)) RebalanceWithOnlyCurrentShares(chkOnlyToBands.Checked, investments);
-            RebalanceWithOnlyNewCash(chkOnlyToBands.Checked, investments);
+            if (string.IsNullOrWhiteSpace(txtCash.Text) || (decimal.TryParse(txtCash.Text.Trim(), out var temp) ? temp : 0m) == 0) RebalanceWithOnlyCurrentShares(chkOnlyToBands.Checked, investments);
+            else RebalanceWithOnlyNewCash(investments);
 
         }
         else if (radioOnlyCurrent.Checked)
@@ -117,28 +130,90 @@ public partial class MainView : Form
         return targets.Replace("%", "").Split("\r\n").Select(x => x.Trim()).Where(x => int.TryParse(x, out _)).Select(int.Parse).ToList();
     }
 
-    private void RebalanceWithOnlyNewCash(bool onlyToBands, List<Investment> investments)
+    private void RebalanceWithOnlyNewCash(List<Investment> investments)
     {
+        // onlyToBands not needed because it should be going past bands to spend all cash anyways
+        
         var cashToAdd = decimal.TryParse(txtCash.Text.Trim(), out var temp) ? temp : 0m;
-        var totalValue = investments.Sum(x => x.shares * x.price);
-
-        var obviouslyNeedMoreShares = investments.Where(x => ((x.shares * x.price)/totalValue) - (x.target / 100m) < -0.02m).ToList();
+        Investment lastBought = null;
+        
+        var mostUnderweight = investments.OrderBy(x => x.offTargetPercentage).ToList();
+        while (mostUnderweight.Sum(x => x.sharesToAdd * x.price) <= cashToAdd)
+        {
+            if (mostUnderweight.Count == 0) break;
+            
+            lastBought = mostUnderweight.First();
+            lastBought.sharesToAdd++;
+            
+            var newTotalValue = investments.Sum(x => x.value + (x.sharesToAdd * x.price));
+            mostUnderweight = mostUnderweight.OrderBy(x => (x.value + (x.sharesToAdd * x.price)) / newTotalValue - x.targetPercentage).ToList();
+        }
+        
+        // If last bought went too over budget, then fine tune below to better spend that last chunk of cash
+        var spent = investments.Sum(x => x.sharesToAdd * x.price);
+        var remainingCash = cashToAdd - spent;
+        if (remainingCash < 0 && lastBought != null)
+        {
+            lastBought.sharesToAdd--;
+            remainingCash += lastBought.price;
+        }
+        SpendRemainingCash(investments, remainingCash);
     }
-
-    private List<decimal> RebalanceWithOnlyCurrentShares(bool onlyToBands,  List<Investment> investments)
+    
+    private void SpendRemainingCash(List<Investment> investments, decimal remainingCash)
     {
-        return null;
+        if (remainingCash <= 0) return;
+
+        var candidates = investments.Where(i => i.price <= remainingCash).OrderBy(i => i.price / Math.Max(0.0001m, Math.Abs(i.offTargetPercentage))).ToList();
+        foreach (var inv in candidates)
+        {
+            while (inv.price <= remainingCash)
+            {
+                inv.sharesToAdd++;
+                remainingCash -= inv.price;
+            }
+        }
+    }
+    
+    private void RebalanceWithOnlyCurrentShares(bool onlyToBands,  List<Investment> investments)
+    {
+        if (investments.Count <=1) return;
+        while (true)
+        {
+            var totalRebalancedValue = investments.Sum(x => x.value + (x.sharesToAdd * x.price));
+            
+            if (onlyToBands && 
+                investments.All(x => ((x.value + (x.sharesToAdd * x.price)) / totalRebalancedValue - x.targetPercentage) >= -0.0175m) &&
+                investments.All(x => ((x.value + (x.sharesToAdd * x.price)) / totalRebalancedValue - x.targetPercentage) <= 0.0175m))
+                break;
+            else if (investments.All(x => ((x.value + (x.sharesToAdd * x.price)) / totalRebalancedValue - x.targetPercentage) >= -0.005m) &&
+                     investments.All(x => ((x.value + (x.sharesToAdd * x.price)) / totalRebalancedValue - x.targetPercentage) <= 0.005m))
+                break;
+
+            var underweight = investments.OrderBy(x => (x.value + (x.sharesToAdd * x.price)) / totalRebalancedValue - x.targetPercentage).First();
+            var overweight = investments.OrderByDescending(x => (x.value + (x.sharesToAdd * x.price)) / totalRebalancedValue - x.targetPercentage).First();
+            
+            overweight.sharesToAdd--;
+
+            var priceDiffMultiple = (int)(overweight.price / underweight.price);
+            for (int i = 0; i < priceDiffMultiple; i++) underweight.sharesToAdd++;
+        }
+        
+        // spend remaining cash by just calling the other rebalancing method
+        if (investments.Any(x => x.sharesToAdd != 0)) RebalanceWithOnlyNewCash(investments);
     }
 
     private void OutputRebalancedData(List<Investment> investments)
     {
+        txtOutput.Text += "\r\n";
         foreach (var investment in investments)
         {
-            txtOutput.Text += $"{investment.ticker} should get {investment.sharesToAdd} more shares.\r\n";
+            var plusOrMinus = investment.sharesToAdd >= 0 ? "+" : ""; // negative int printed out already comes with a minus sign
+            txtOutput.Text += $"{plusOrMinus}{investment.sharesToAdd}\t{investment.ticker}\r\n";
         }
         
         var cashToAdd = decimal.TryParse(txtCash.Text.Trim(), out var temp) ? temp : 0m;
-        var totalValue = investments.Sum(x => x.shares * x.price);
+        var totalValue = investments.Sum(x => x.value);
         var totalRebalancedValue = investments.Sum(x => (x.shares + x.sharesToAdd) * x.price);
         txtOutput.Text += $"Leftover cash: {cashToAdd - (totalRebalancedValue - totalValue)}";
     }
