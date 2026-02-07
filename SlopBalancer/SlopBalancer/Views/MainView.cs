@@ -205,7 +205,7 @@ public partial class MainView : Form
 
     private void OutputRebalancedData(List<Investment> investments)
     {
-        txtOutput.Text += "\r\n";
+        if (txtOutput.Text != "") txtOutput.Text += "\r\n";
         foreach (var investment in investments)
         {
             var plusOrMinus = investment.sharesToAdd >= 0 ? "+" : ""; // negative int printed out already comes with a minus sign
@@ -215,6 +215,12 @@ public partial class MainView : Form
         var cashToAdd = decimal.TryParse(txtCash.Text.Trim(), out var temp) ? temp : 0m;
         var totalValue = investments.Sum(x => x.value);
         var totalRebalancedValue = investments.Sum(x => (x.shares + x.sharesToAdd) * x.price);
-        txtOutput.Text += $"Leftover cash: {cashToAdd - (totalRebalancedValue - totalValue)}";
+        txtOutput.Text += $"{cashToAdd - (totalRebalancedValue - totalValue)}\tleftover cash";
+        
+        txtOutput.Text += "\r\nOR copy paste below:\r\n";
+        foreach (var investment in investments)
+        {
+            txtOutput.Text += $"{investment.sharesToAdd}\r\n";
+        }
     }
 }

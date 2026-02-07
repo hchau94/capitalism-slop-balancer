@@ -129,7 +129,7 @@ partial class MainView
         txtTickers.Location = new System.Drawing.Point(3, 23);
         txtTickers.Multiline = true;
         txtTickers.Name = "txtTickers";
-        txtTickers.Size = new System.Drawing.Size(194, 1006);
+        txtTickers.Size = new System.Drawing.Size(194, 600);
         txtTickers.TabIndex = 5;
         // 
         // txtPrices
@@ -138,7 +138,7 @@ partial class MainView
         txtPrices.Location = new System.Drawing.Point(203, 23);
         txtPrices.Multiline = true;
         txtPrices.Name = "txtPrices";
-        txtPrices.Size = new System.Drawing.Size(194, 1006);
+        txtPrices.Size = new System.Drawing.Size(194, 600);
         txtPrices.TabIndex = 6;
         // 
         // txtCurrentShares
@@ -147,7 +147,7 @@ partial class MainView
         txtCurrentShares.Location = new System.Drawing.Point(403, 23);
         txtCurrentShares.Multiline = true;
         txtCurrentShares.Name = "txtCurrentShares";
-        txtCurrentShares.Size = new System.Drawing.Size(194, 1006);
+        txtCurrentShares.Size = new System.Drawing.Size(194, 600);
         txtCurrentShares.TabIndex = 7;
         // 
         // txtTargets
@@ -156,7 +156,7 @@ partial class MainView
         txtTargets.Location = new System.Drawing.Point(603, 23);
         txtTargets.Multiline = true;
         txtTargets.Name = "txtTargets";
-        txtTargets.Size = new System.Drawing.Size(194, 1006);
+        txtTargets.Size = new System.Drawing.Size(194, 600);
         txtTargets.TabIndex = 8;
         // 
         // lblTickers
@@ -171,12 +171,12 @@ partial class MainView
         // txtOutput
         // 
         txtOutput.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtOutput.Enabled = false;
         txtOutput.Location = new System.Drawing.Point(803, 23);
         txtOutput.Multiline = true;
         txtOutput.Name = "txtOutput";
         txtOutput.ReadOnly = true;
-        txtOutput.Size = new System.Drawing.Size(273, 1006);
+        txtOutput.ScrollBars = ScrollBars.Vertical;
+        txtOutput.Size = new System.Drawing.Size(273, 600);
         txtOutput.TabIndex = 9;
         // 
         // lblControls
@@ -202,7 +202,7 @@ partial class MainView
         panelControls.Dock = System.Windows.Forms.DockStyle.Fill;
         panelControls.Location = new System.Drawing.Point(1082, 23);
         panelControls.Name = "panelControls";
-        panelControls.Size = new System.Drawing.Size(194, 1006);
+        panelControls.Size = new System.Drawing.Size(194, 600);
         panelControls.TabIndex = 11;
         // 
         // cmdRefresh
