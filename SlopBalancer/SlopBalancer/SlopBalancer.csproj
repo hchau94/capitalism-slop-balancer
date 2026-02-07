@@ -6,6 +6,11 @@
         <Nullable>enable</Nullable>
         <UseWindowsForms>true</UseWindowsForms>
         <ImplicitUsings>enable</ImplicitUsings>
+        <PublishSingleFile>true</PublishSingleFile>
+        <SelfContained>true</SelfContained>
+        <DebugType>none</DebugType>
+        <DebugSymbols>false</DebugSymbols>
+        <PublishReadyToRun>false</PublishReadyToRun>
     </PropertyGroup>
 
     <ItemGroup>
